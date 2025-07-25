@@ -1,63 +1,38 @@
-#define USE_LCD false  // ← 改為 true 可重新啟用 LCD
+const int analogPin = A0;               // 模擬輸入腳位
+const float referenceVoltage = 3.3;     // Teensy 通常是 3.3V
+const int adcMax = 1023;                // 10-bit ADC（根據型號可調整為 4095）
 
-#if USE_LCD
-#include <LiquidCrystal_PCF8574.h>
-LiquidCrystal_PCF8574 lcd(0x27);
-#endif
+const int sampleRateHz = 10000;         // 採樣率 = 10kHz
+const int averagingCount = 2000;        // 每 2000 筆取平均
+const unsigned long sampleIntervalMicros = 1000000 / sampleRateHz;
 
-const int analogPin1 = A0;
-const int analogPin2 = A1;
-const float referenceVoltage = 5.0;
+unsigned long lastSampleTime = 0;
+unsigned int sampleCounter = 0;
+unsigned long sumADC = 0;
 
 void setup() {
-#if USE_LCD
-  lcd.begin(16, 2);
-  lcd.setBacklight(255);
-  lcd.clear();
-
-  lcd.setCursor(0, 0);
-  lcd.print("  Voltage Meter ");
-  lcd.setCursor(0, 1);
-  lcd.print("    Ready...    ");
-  delay(2000);
-  lcd.clear();
-#endif
-
-  Serial.begin(9600);
+  Serial.begin(115200);                 // 使用 Teensy 高速序列傳輸
+  analogReadResolution(10);            // 設定 ADC 為 10-bit（可改成12或16）
 }
 
 void loop() {
-  int raw1 = analogRead(analogPin1);
-  int raw2 = analogRead(analogPin2);
+  unsigned long now = micros();
+  if (now - lastSampleTime >= sampleIntervalMicros) {
+    lastSampleTime = now;
 
-  float voltage1 = raw1 * referenceVoltage / 1023.0;
-  float voltage2 = raw2 * referenceVoltage / 1023.0;
-  float diff = voltage1 - voltage2;
+    int adcValue = analogRead(analogPin);
+    sumADC += adcValue;
+    sampleCounter++;
 
-#if USE_LCD
-  lcd.setCursor(0, 0);
-  lcd.print("A0:");
-  lcd.print(voltage1, 2);
-  lcd.print("V");
+    if (sampleCounter >= averagingCount) {
+      float averageADC = sumADC / (float)averagingCount;
+      float voltage = averageADC * referenceVoltage / adcMax;
 
-  lcd.setCursor(9, 0);
-  lcd.print("A1:");
-  lcd.print(voltage2, 2);
-  lcd.print("V");
-
-  lcd.setCursor(0, 1);
-  lcd.print("Diff:");
-  lcd.print(diff, 2);
-  lcd.print("V   ");
-#endif
-  Serial.print("A0: ");
-  Serial.print(voltage1, 3);
-  Serial.print(",");
-  Serial.print("A1: ");
-  Serial.print(voltage2, 3);
-  Serial.print(",");
-  Serial.print("diff: ");
-  Serial.println(diff, 3);
-
-  delay(300);
+      Serial.println(voltage, 4);      // 輸出平均電壓（保留4位小數）
+      
+      // 重置
+      sumADC = 0;
+      sampleCounter = 0;
+    }
+  }
 }
