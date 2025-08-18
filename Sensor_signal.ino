@@ -1,38 +1,51 @@
-const int analogPin = A0;               // 模擬輸入腳位
-const float referenceVoltage = 3.3;     // Teensy 通常是 3.3V
-const int adcMax = 1023;                // 10-bit ADC（根據型號可調整為 4095）
+// 硬體部分 teensy 4.0
+const int analogPin = A0; 
+const float Vref = 3.3; 
+const int ADC_resolution = 1023;
 
-const int sampleRateHz = 10000;         // 採樣率 = 10kHz
-const int averagingCount = 2000;        // 每 2000 筆取平均
-const unsigned long sampleIntervalMicros = 1000000 / sampleRateHz;
-
-unsigned long lastSampleTime = 0;
-unsigned int sampleCounter = 0;
-unsigned long sumADC = 0;
-
+// 平滑參數
+const int smoothWindow = 5;   // 平滑窗口大小 (可調整)
+float smoothBuffer[smoothWindow];
+int bufferIndex = 0;
+float smoothSum = 0;
+float smoothVoltage = 0;       // 平滑後的電壓值
+float prev_smoothVoltage = 0;
+// 原始電壓
+float voltage = 0;
+//////////////////////////////////////////////////
+IntervalTimer myTimer;
+void outputFunction() {
+  // 輸出原始值 + 平滑後的結果
+  Serial.print(smoothVoltage, 3);
+  //Serial.print(" ");
+  //Serial.print(abs(smoothVoltage-prev_smoothVoltage), 3);
+  Serial.print(" ");
+  Serial.println(1);
+  prev_smoothVoltage = smoothVoltage;
+}
+/////////////////////////////////////////////////
 void setup() {
-  Serial.begin(115200);                 // 使用 Teensy 高速序列傳輸
-  analogReadResolution(10);            // 設定 ADC 為 10-bit（可改成12或16）
+  Serial.begin(115200);
+  analogReadResolution(10);
+  analogReadAveraging(5);   // 硬體平均
+  myTimer.begin(outputFunction, 100000);  // 每 50 ms 輸出一次
+  
+  // 初始化平滑緩衝區
+  for (int i = 0; i < smoothWindow; i++) {
+    smoothBuffer[i] = 0;
+  }
 }
 
 void loop() {
-  unsigned long now = micros();
-  if (now - lastSampleTime >= sampleIntervalMicros) {
-    lastSampleTime = now;
+  // 讀取新的 ADC 值
+  int adcValue = analogRead(analogPin);
+  voltage = adcValue * Vref / ADC_resolution;
 
-    int adcValue = analogRead(analogPin);
-    sumADC += adcValue;
-    sampleCounter++;
+  // 更新移動平均 (滑動窗口)
+  smoothSum -= smoothBuffer[bufferIndex];    // 移除舊值
+  smoothBuffer[bufferIndex] = voltage;       // 放入新值
+  smoothSum += voltage;                      // 累加新值
+  bufferIndex = (bufferIndex + 1) % smoothWindow;
 
-    if (sampleCounter >= averagingCount) {
-      float averageADC = sumADC / (float)averagingCount;
-      float voltage = averageADC * referenceVoltage / adcMax;
-
-      Serial.println(voltage, 4);      // 輸出平均電壓（保留4位小數）
-      
-      // 重置
-      sumADC = 0;
-      sampleCounter = 0;
-    }
-  }
+  smoothVoltage = smoothSum / smoothWindow;  // 平滑後的電壓
 }
