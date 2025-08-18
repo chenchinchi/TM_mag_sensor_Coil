@@ -33,7 +33,7 @@
 
 ## 四、感測器結構
 
-### ▍方形同心線圈
+### ▍方形同心線圈(已捨棄)
 
 | 線圈類型     | 尺寸（長×寬）  | 匝數    |
 | -------- | -------- | ----- |
@@ -44,7 +44,7 @@
 
 ---
 
-### ▍圓形同心線圈
+### ▍圓形同心線圈(已捨棄)
 
 | 線圈類型     | 尺寸（直徑） | 匝數   |
 | -------- | ------ | ---- |
@@ -55,7 +55,15 @@
 
 ---
 
-### ▍差分線圈結構
+### ▍TMR + 激勵線圈
+| 線圈類型     | 尺寸（直徑） | 匝數   |
+| -------- | ------ | ---- |
+| 激勵線圈 | 18 mm  | 100 匝 |
+
+<img width="909" height="629" alt="image" src="https://github.com/user-attachments/assets/adf11ace-fea6-412b-8043-8cef8ab169fa" />
+
+
+### ▍差分線圈結構(已捨棄)
 
 | 線圈類型     | 尺寸（長×寬）    | 匝數    |
 | -------- | ---------- | ----- |
@@ -67,16 +75,6 @@
 ---
 
 ## 五、感測器接口（外觀圖）
+<img width="793" height="654" alt="image" src="https://github.com/user-attachments/assets/1236c948-7295-4cb3-a146-07950c60887a" />
 
-### ▍上視圖
-
-<img src="https://github.com/user-attachments/assets/c62f7803-c9ad-49c0-a165-46a7854cda16" width="300"/>
-
----
-
-### ▍側視圖
-
-<img src="https://github.com/user-attachments/assets/2bef0255-d781-408d-8d4d-251d47cf25c7" width="300"/>
-
----
 
